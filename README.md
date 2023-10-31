@@ -9,13 +9,13 @@ This repository provides the source code for create a comparable corpora based o
 Before starting to create a dataset, it is necessary to create a Wikipedia tree and associate categories with topics.
 For that step the following programme must be run:
 
-```python -m scripts.create_tree  ```
+    python -m scripts.create_tree
 
 ### __Create Wikipedia corpora__
 
 Start the corpus creation process with the following command:
 
-```python -m scripts.build_corpus -n <string> [-l1 <string>] [-l2 <string>] [-verbose] ...```
+    python -m scripts.build_corpus -n <string> [-l1 <string>] [-l2 <string>] [-verbose] ...
 
 The meaning of main argument is:
 * ``-h``, ``--help``: Show usage.
@@ -27,4 +27,16 @@ The meaning of main argument is:
 **Example:**
 For En-Fr corpora: 
 
-```python -m scripts.build_corpus -n v0_0 -l1 en -l2 fr```
+    python -m scripts.build_corpus -n v0_0 -l1 en -l2 fr
+
+### __View corpus information__
+
+    python -m scripts.corpus_info -n <string> [-s] [-b] [-m] 
+
+The meaning of main argument is:
+* ``-h``, ``--help``: Show usage.
+* ``-n <string>``, ``--name <string>``: A name to identify several versions of the corpus. Ex. v0_0.
+* ``-s``, ``--stat``: Show information about the number of documents and labels.
+* ``-b``, ``--bar``: Build a bar plot.
+* ``-m``, ``--heatmap``: Build a heatmap plot.
+
