@@ -1,6 +1,6 @@
 import os
-import util
-import constants
+from wiki_package import util
+from wiki_package import constants
 
 
 class WikiCorpus:
@@ -18,6 +18,7 @@ class WikiCorpus:
         self.dataset = None
         self.target = None
         self.lang_mask = None
+        self.type_mask = None
         self.n_clusters = None
         self.n_docs = None
 
@@ -45,9 +46,24 @@ class WikiCorpus:
             self.dataset.extend([{'id': doc_id, 'text': wiki_info['text'][i]}
                                  for i, doc_id in enumerate(wiki_info['id'])])
             self.target.extend(wiki_info['label'])
-            self.lang_mask.extend([land_id] *  n_doc)
+            self.lang_mask.extend([land_id] * n_doc)
         self.n_clusters = len(set([doc_label for doc_labels in self.target for doc_label in doc_labels]))
-        self.n_docs = len( self.dataset)
+        self.n_docs = len(self.dataset)
+
+    def set_type_mask(self):
+        self.type_mask = []
+        for i in range(self.n_docs):
+            type_mark = None
+            if self.target[i][0] in self.mono1_clusters:
+                type_mark = 0
+            elif self.target[i][0] in self.bi_clusters:
+                type_mark = 1
+            elif self.target[i][0] in self.mono2_clusters:
+                type_mark = 2
+            self.type_mask.append(type_mark)
+
+        if None in self.type_mask:
+            print('Clusters are not distributed by type correctly.')
 
     def set_cluster_types(self):
         lang_labels = [set(), set()]
@@ -59,6 +75,7 @@ class WikiCorpus:
         self.bi_clusters = set(lang_labels[0] & lang_labels[1])
         self.mono1_clusters = set(lang_labels[0] - lang_labels[1])
         self.mono2_clusters = set(lang_labels[1] - lang_labels[0])
+        self.set_type_mask()
 
     def load_label2cat(self, path):
         self.label2cat = util.read_data(
@@ -68,6 +85,4 @@ class WikiCorpus:
         if self.label2cat is None:
             print('No category information has been uploaded.')
             return None
-        return  self.label2cat[label]
-
-
+        return self.label2cat[label]
