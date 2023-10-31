@@ -78,12 +78,16 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
                     map[i, j] = max_size_label
 
         for i, clusters in enumerate([corpus.mono1_clusters, corpus.bi_clusters, corpus.mono2_clusters]):
-            index = np.array(sorted(clusters)).astype(int)
+            list_of_labels = np.array(list(clusters))
+            cluster_sizes = np.array([map[label, label] for label in list_of_labels])
+            index = list_of_labels[(-cluster_sizes).argsort()[:size_show]].astype(int)
             sub_map = map[index][:, index]
-            sns.heatmap(sub_map[:size_show, :size_show], xticklabels=index, yticklabels=index,
+
+            sns.heatmap(sub_map,
+                        #xticklabels=index, yticklabels=index,
                         cmap="YlGnBu", ax=axs[i])
-            axs[i].set_title([f'monolingual {corpus.language_1}', f'monolingual {corpus.language_2}', 'bilingual'][i])
-            axs[i].set(xlabel="Label id", ylabel="Label id")
+            axs[i].set_title([f'monolingual {corpus.language_1}', 'bilingual', f'monolingual {corpus.language_2}'][i])
+            #axs[i].set(xlabel="Label id", ylabel="Label id")
         plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_id}_heatmap{size_show}-{max_size_label}.png'))
         plt.show()
 

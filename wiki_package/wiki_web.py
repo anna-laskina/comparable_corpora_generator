@@ -1175,7 +1175,7 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
         list_of_land = cat_langs
 
         print('number of pages per cluster:', cat_size)
-
+        search_size = cat_size if len(cat_langs) == 1 else cat_size // 2
         start_time = time.perf_counter()
 
         if if_without_intersections_within_datatype:
@@ -1185,7 +1185,7 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
             forbidden_cat.discard(cat)
 
         page_id_list = find_pages_under_category(main_category=cat,
-                                                 category_size=cat_size,
+                                                 category_size=search_size,
                                                  required_languages=list_of_land,
                                                  forbidden_category=forbidden_cat,
                                                  forbidden_pages=used_pages,
@@ -1407,18 +1407,9 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
             os.remove(os.path.join(data_save_path, f'wiki_only_{language_2}_bk.json'))
             os.remove(os.path.join(data_save_path, f'wiki_common_bk.json'))
         except:
-            print()
-        os.remove(backup_path)
+            os.rmdir(backup_path)
 
     return corpus1, corpus2
 
 if __name__ == "__main__":
-    cs = {'only_en': {'category': ["Sports",  "Science"], 'language': ['en']},
-                  'only_fr': {'category': ["Law"], 'language': ['fr']},
-                  'common': {'category': ["Information", "Military", "Engineering"], 'language': ['en', 'fr']},
-            }
-    collect_wikidata_shuffle(categories_set=cs, variation_cat_size=[2,4, 5], weights_cat_size=None, max_level_search_pageid=20,
-                          max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
-                          if_labels_separately=False, if_del_none=True, excluded_categories=True,
-                          iteration=['only_fr', 'only_en', 'common'], if_reversed=False, if_without_intersections_within_datatype=False,
-                          if_display_find_alg=True, save_path=None)
+    print('ok')
