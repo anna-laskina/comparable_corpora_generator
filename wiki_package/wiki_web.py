@@ -445,6 +445,8 @@ def map_subcategories_to_categories_from_wiki_tree(wikipedia_tree=None, initial_
         wikipedia_tree = create_wikipedia_tree(root_categories=constants.ROOT_CATEGORY,
                                                save_path=constants.SAVE_TREE_PATH,
                                                start_level=0)
+    elif type(wikipedia_tree) == str:
+        wikipedia_tree = util.read_data(wikipedia_tree)
     sub2cat = {}
 
     for category, [cat_level, cat_type, _] in wikipedia_tree.items():
@@ -1302,7 +1304,7 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
         data_save_path = save_path
 
     backup_path = os.path.join(data_save_path, 'backup')
-    path_check(path=backup_path)
+    path_check(path=backup_path, if_create=True)
 
     if num_cpu > 1:
         if_display_find_alg = False
@@ -1402,12 +1404,10 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
 
     if os.path.exists(os.path.join(data_save_path, f'wikipedia_{language_1}_{add_name}.json')) and os.path.exists(os.path.join(data_save_path, f'wikipedia_{language_2}_{add_name}.json')):
         print('Corpus has been successfully created. Intermediate files will be deleted')
-        try:
-            os.remove(os.path.join(data_save_path, f'wiki_only_{language_1}_bk.json'))
-            os.remove(os.path.join(data_save_path, f'wiki_only_{language_2}_bk.json'))
-            os.remove(os.path.join(data_save_path, f'wiki_common_bk.json'))
-        except:
-            os.rmdir(backup_path)
+        for root, dirs, files in os.walk(backup_path):
+            for f in files:
+                os.remove(os.path.join(root, f))
+        os.rmdir(backup_path)
 
     return corpus1, corpus2
 
