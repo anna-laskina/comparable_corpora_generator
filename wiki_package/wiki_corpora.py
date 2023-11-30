@@ -41,7 +41,7 @@ class WikiCorpus:
         self.lang_mask = []
 
         for land_id, language in enumerate([self.language_1, self.language_2]):
-            wiki_info = util.read_data(os.path.join(path, f'wikipedia_{language}_{self.corpus_id}.json'))
+            wiki_info = util.read_data(os.path.join(path, f'dataset_{self.corpus_id}/wikipedia_{language}_{self.corpus_id}.json'))
             n_doc = len(wiki_info['id'])
             self.dataset.extend([{'id': doc_id, 'text': wiki_info['text'][i]}
                                  for i, doc_id in enumerate(wiki_info['id'])])
@@ -79,7 +79,7 @@ class WikiCorpus:
 
     def load_label2cat(self, path):
         self.label2cat = util.read_data(
-            os.path.join(path, f'wikipedia_categories_all_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
+            os.path.join(path, f'dataset_{self.corpus_id}/wikipedia_categories_all_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
 
     def label2cat(self, label):
         if self.label2cat is None:

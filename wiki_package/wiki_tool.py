@@ -27,7 +27,7 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
      to build a heatmap (def. 100).
     :return: None
     """
-    corpus_path = os.path.join(corpus_path, f'dataset_{corpus_id}')
+    #corpus_path = os.path.join(corpus_path, f'dataset_{corpus_id}')
     save_path = os.path.join(save_path, f'dataset_{corpus_id}')
     path_check(path=os.path.join(save_path), if_create=True)
     corpus = WikiCorpus(corpus_id=corpus_id, load_label_info=True, set_cluster_info=True, info_path=corpus_path)
@@ -35,7 +35,7 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
     if show_stat:
         print('DOC', f'Total = {len(corpus.dataset)}, '
                      f'In {corpus.language_1} = {corpus.lang_mask.count(0)}, '
-                     f'In {corpus.language_2} = {corpus.lang_mask.count(0)}, '
+                     f'In {corpus.language_2} = {corpus.lang_mask.count(1)}, '
                      f'Common = {corpus.type_mask.count(1)}, '
                      f'Only in {corpus.language_1} = {corpus.type_mask.count(0)}, '
                      f'Only in {corpus.language_2} = {corpus.type_mask.count(2)}.')
