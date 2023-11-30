@@ -849,7 +849,7 @@ def get_data_from_pages(list_of_page_ids, list_of_language, convert_categories=N
             for doc_id in list_of_page_ids]
 
 
-def check_pageid(pageid, list_of_languages, forbidden_cat, map_subcat2cat=None, max_num_cat=100,
+def check_pageid(pageid, list_of_languages, forbidden_cat, map_subcat2cat=None, min_num_cat=1,  max_num_cat=100,
                  if_del_none=True, excluded_categories=True):
     """Function to check the page for the following conditions:
     1. whether the page exists in all languages from [list_of_languages]
@@ -876,11 +876,12 @@ def check_pageid(pageid, list_of_languages, forbidden_cat, map_subcat2cat=None, 
         return False
     return all(ll in main_page_data['language'] for ll in list_of_languages) and \
         all(ll not in main_page_data['categories'] for ll in forbidden_cat) and \
-        0 < len(main_page_data['categories']) <= max_num_cat
+        min_num_cat <= len(main_page_data['categories']) <= max_num_cat
 
 
 def choose_relevant_pages_from_candidates(candidate_pages, required_num,
-                                          required_languages, list_of_forbidden_categories, max_num_cat=100,
+                                          required_languages, list_of_forbidden_categories,
+                                          min_num_cat=1, max_num_cat=100,
                                           map_subcat2cat=None, if_del_none=True, excluded_categories=True):
     """A function for choosing pages that satisfy the following conditions:
         1. whether the page exists in all languages from [required_languages]
@@ -918,7 +919,7 @@ def choose_relevant_pages_from_candidates(candidate_pages, required_num,
 
 def find_pages_under_category(main_category, category_size,
                               required_languages, forbidden_category, forbidden_pages,
-                              max_num_cat=5, max_level=22, if_print=False,
+                              min_num_cat=1, max_num_cat=5, max_level=22, if_print=False,
                               subcat2cat=None, if_del_none=True, excluded_categories=True):
     """Function for finding pages that belong to a category ([main_category]) and satisfy several conditions.
 
@@ -960,6 +961,7 @@ def find_pages_under_category(main_category, category_size,
                                                                required_num=category_size - len(final_pages),
                                                                required_languages=required_languages,
                                                                list_of_forbidden_categories=forbidden_category,
+                                                               min_num_cat=min_num_cat,
                                                                max_num_cat=max_num_cat,
                                                                map_subcat2cat=subcat2cat,
                                                                if_del_none=if_del_none,
@@ -1010,7 +1012,7 @@ def categories2labels(categories, convert_categories=None, del_none=True, exclud
 
 
 def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, max_level_search_pageid=20,
-                     max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
+                     min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
                      if_labels_separately=False, if_del_none=True, excluded_categories=True,
                      iteration=None, if_reversed=False, if_without_intersections_within_datatype=False,
                      if_display_find_alg=True, save_path=None):
@@ -1072,6 +1074,7 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
                                                                             list_of_land,
                                                                             forbidden_cat,
                                                                             used_pages,
+                                                                            min_num_of_cat_on_page,
                                                                             max_num_of_cat_on_page,
                                                                             max_level_search_pageid,
                                                                             if_display_find_alg,
@@ -1100,6 +1103,7 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
                                                          required_languages=list_of_land,
                                                          forbidden_category=forbidden_cat,
                                                          forbidden_pages=used_pages,
+                                                         min_num_cat=min_num_of_cat_on_page,
                                                          max_num_cat=max_num_of_cat_on_page,
                                                          max_level=max_level_search_pageid,
                                                          if_print=if_display_find_alg,
@@ -1133,7 +1137,7 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
 
 
 def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_size=None, max_level_search_pageid=20,
-                     max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
+                     min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
                      if_labels_separately=False, if_del_none=True, excluded_categories=True,
                      iteration=None, if_reversed=False, if_without_intersections_within_datatype=False,
                      if_display_find_alg=True, save_path=None):
@@ -1191,6 +1195,7 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
                                                  required_languages=list_of_land,
                                                  forbidden_category=forbidden_cat,
                                                  forbidden_pages=used_pages,
+                                                 min_num_cat=min_num_of_cat_on_page,
                                                  max_num_cat=max_num_of_cat_on_page,
                                                  max_level=max_level_search_pageid,
                                                  if_print=if_display_find_alg,
@@ -1244,7 +1249,8 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
                                 language_1='en', language_2='fr',
                                 max_level_for_search_categories=3, max_num_initial_categories=3000,
                                 mapping_of_subcategories_in_main_category=None,
-                                del_none=False, excluded_categories=False, max_num_of_cat_on_page=10,
+                                del_none=False, excluded_categories=False,
+                                min_num_of_cat_on_page=1,  max_num_of_cat_on_page=10,
                                 variation_cluster_size=None, weights_cluster_size=None,
                                 max_level_for_search_pages=2, num_cpu=1, if_without_intersections_within_datatype=False,
                                 if_labels_separately=False, iteration=None, if_reversed=True, if_display_find_alg=True,
@@ -1371,6 +1377,7 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
         variation_cat_size=variation_cluster_size,
         weights_cat_size=weights_cluster_size,
         max_level_search_pageid=max_level_for_search_pages,
+        min_num_of_cat_on_page=min_num_of_cat_on_page,
         max_num_of_cat_on_page=max_num_of_cat_on_page,
         subcat2cat=subcat2cat,
         num_cpu=num_cpu,

@@ -40,7 +40,9 @@ if __name__ == "__main__":
 
     parser.add_argument("-wiw", "--without_inter_within", action='store_true',
                         help = 'True = not intersections_within_datatyp')
-    parser.add_argument("-cp", "--max_num_of_cat_on_page", type=int, default=3,
+    parser.add_argument("-min_cp", "--min_num_of_cat_on_page", type=int, default=1,
+                        help="the minimum number of categories a page can contain.")
+    parser.add_argument("-max_cp", "--max_num_of_cat_on_page", type=int, default=100,
                         help="the maximum number of categories a page can contain.")
 
 
@@ -99,6 +101,7 @@ if __name__ == "__main__":
         mapping_of_subcategories_in_main_category= os.path.join(args.save_path_tree, args.map_subcat_to_cat_filename),
         del_none=True,
         excluded_categories=True,
+        min_num_of_cat_on_page= args.min_num_of_cat_on_page,
         max_num_of_cat_on_page=args.max_num_of_cat_on_page,
         variation_cluster_size=variation_cluster_size_list,
         weights_cluster_size=None,
