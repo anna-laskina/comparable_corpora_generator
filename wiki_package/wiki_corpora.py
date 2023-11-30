@@ -77,6 +77,16 @@ class WikiCorpus:
         self.mono2_clusters = set(lang_labels[1] - lang_labels[0])
         self.set_type_mask()
 
+    def get_cluster_type(self, label):
+        if label in self.bi_clusters:
+            return 1
+        elif label in self.mono1_clusters:
+            return 0
+        elif label in self.mono2_clusters:
+            return 2
+        else:
+            return -1
+
     def load_label2cat(self, path):
         self.label2cat = util.read_data(
             os.path.join(path, f'dataset_{self.corpus_id}/wikipedia_categories_all_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
