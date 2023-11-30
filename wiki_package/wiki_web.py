@@ -908,6 +908,7 @@ def choose_relevant_pages_from_candidates(candidate_pages, required_num,
                         list_of_languages=required_languages,
                         forbidden_cat=list_of_forbidden_categories,
                         map_subcat2cat=map_subcat2cat,
+                        min_num_cat=min_num_cat,
                         max_num_cat=max_num_cat,
                         if_del_none=if_del_none,
                         excluded_categories=excluded_categories):
