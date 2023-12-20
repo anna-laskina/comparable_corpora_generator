@@ -12,6 +12,8 @@ if __name__ == "__main__":
                         help="Number of iterations of the subcategory search")
     parser.add_argument("-pl", "--primary_level", type=int, default=2,
                         help="The level in Wikipedia Tree on which the mapping will be based.")
+    parser.add_argument("-rc", "--root_categories", type=str, default='main_topic_classifications',
+                        help="Root categories")
     parser.add_argument("-ot", "--only_tree", action='store_true',
                         help="Run only wikipedia tree creation.")
     parser.add_argument("-om", "--only_map", action='store_true',
@@ -22,8 +24,9 @@ if __name__ == "__main__":
                         help="save tree path")
     args = parser.parse_args()
 
+    list_of_root_categories = args.root_categories.replace('_', ' ').split('+')
     if args.only_map:
-        dirl = glob.glob(os.path.join(args.save_path_tree, f'wikipedia_tree_levels_0-*.json'))
+        dirl = glob.glob(os.path.join(args.save_path_tree, f'wikipedia_tree_*levels_0-*.json'))
 
         if len(dirl) > 1:
             print('There are several trees. Please choose which one to use. '
@@ -42,10 +45,11 @@ if __name__ == "__main__":
         wikipedia_tree = dirl[num]
     else:
         wikipedia_tree = create_wikipedia_tree(
-            root_categories=[constants.ROOT_CATEGORY],
+            root_categories=list_of_root_categories,
             save_path=args.save_path_tree,
             start_level=0,
             max_level=args.max_level,
+            add_name=''.join([cat[0] for cat in list_of_root_categories]),
             if_backup=True,
         )
 

@@ -338,7 +338,8 @@ def mapping_subcategories_to_categories(initial_categories, type_initial_cat, sa
     return subcat2cat, cat_power
 
 
-def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, max_level=30, if_backup=True):
+def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, max_level=30, add_name = '',
+                          if_backup=True):
     """Function for creating Wikipedia tree.
 
     :param root_categories: list of string, list of root categories (Ex. ['Main topic classifications'])
@@ -417,10 +418,17 @@ def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, m
 
         if if_backup:
             util.save_data(cur_wikipedia_tree,
-                      os.path.join(backup_path, f'back_up_wikipedia_tree_level_{cur_level}.json'))
+                      os.path.join(backup_path, f'back_up_wikipedia_tree_{add_name}_level_{cur_level}.json'))
 
     if save_path is not None:
-        util.save_data(wikipedia_tree, os.path.join(save_path, f'wikipedia_tree_levels_0-{cur_level}.json'))
+        util.save_data(wikipedia_tree, os.path.join(save_path, f'wikipedia_tree_{add_name}_levels_0-{cur_level}.json'))
+
+    print('Wikipedia tree has been successfully created. Intermediate files will be deleted')
+    for root, dirs, files in os.walk(backup_path):
+        for f in files:
+            if f'back_up_wikipedia_tree_{add_name}_level_' in f:
+                os.remove(os.path.join(root, f))
+    #os.rmdir(backup_path)
 
     return wikipedia_tree
 
