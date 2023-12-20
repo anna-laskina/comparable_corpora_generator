@@ -44,6 +44,8 @@ if __name__ == "__main__":
                         help="the minimum number of categories a page can contain.")
     parser.add_argument("-max_cp", "--max_num_of_cat_on_page", type=int, default=100,
                         help="the maximum number of categories a page can contain.")
+    parser.add_argument("-min_d", "--min_doc_num_per_cat", type=int, default=2,
+                        help="the minimum number of documents categories should contain.")
 
 
     parser.add_argument("-init_cat_info", "--initial_category_information",  type=str,
@@ -103,6 +105,7 @@ if __name__ == "__main__":
         excluded_categories=True,
         min_num_of_cat_on_page= args.min_num_of_cat_on_page,
         max_num_of_cat_on_page=args.max_num_of_cat_on_page,
+        min_doc_num_per_cat=args.min_doc_num_per_cat,
         variation_cluster_size=variation_cluster_size_list,
         weights_cluster_size=None,
         max_level_for_search_pages=constants.MAX_LEVEL_FOR_SEARCH_PAGES,

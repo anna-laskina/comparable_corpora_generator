@@ -1020,6 +1020,21 @@ def categories2labels(categories, convert_categories=None, del_none=True, exclud
     return labels, label2cat, cat2label
 
 
+def get_labels_and_cats(wiki_pages_by_type, if_labels_separately, subcat2cat, if_del_none, excluded_categories):
+    label2cat = None
+    cat2label = None
+    label_name = 'label' if if_labels_separately else 'categories'
+    for var_cat, list_of_data in wiki_pages_by_type.items():
+        for i, doc in enumerate(list_of_data):
+            [wiki_pages_by_type[var_cat][i][label_name]], label2cat, cat2label = \
+                categories2labels(categories=[wiki_pages_by_type[var_cat][i]['categories']],
+                                  convert_categories=subcat2cat,
+                                  del_none=if_del_none,
+                                  excluded_categories=excluded_categories,
+                                  label2cat=label2cat)
+    return wiki_pages_by_type, label2cat, cat2label
+
+
 def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, max_level_search_pageid=20,
                      min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
                      if_labels_separately=False, if_del_none=True, excluded_categories=True,
@@ -1130,19 +1145,14 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
         if save_path is not None:
             util.save_data(wiki_pages_by_type[var_cat], os.path.join(save_path, f'wiki_{var_cat}_bk.json'))
 
-    label2cat = None
-    cat2label = None
-    label_name = 'label' if if_labels_separately else 'categories'
-    for var_cat, list_of_data in wiki_pages_by_type.items():
-        for i, doc in enumerate(list_of_data):
-            [wiki_pages_by_type[var_cat][i][label_name]], label2cat, cat2label = \
-                categories2labels(categories=[wiki_pages_by_type[var_cat][i]['categories']],
-                                  convert_categories=subcat2cat,
-                                  del_none=if_del_none,
-                                  excluded_categories=excluded_categories,
-                                  label2cat=label2cat)
-
+    wiki_pages_by_type, label2cat, cat2label = get_labels_and_cats(wiki_pages_by_type=wiki_pages_by_type,
+                                               if_labels_separately=if_labels_separately,
+                                               subcat2cat=subcat2cat,
+                                               if_del_none=if_del_none,
+                                               excluded_categories=excluded_categories)
     return wiki_pages_by_type, label2cat, cat2label
+
+
 
 
 def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_size=None, max_level_search_pageid=20,
@@ -1223,19 +1233,39 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
         if save_path is not None:
             util.save_data(wiki_pages_by_type[var_cat], os.path.join(save_path, f'wiki_{cat}_bk.json'))
 
-    label2cat = None
-    cat2label = None
-    label_name = 'label' if if_labels_separately else 'categories'
-    for var_cat, list_of_data in wiki_pages_by_type.items():
-        for i, doc in enumerate(list_of_data):
-            [wiki_pages_by_type[var_cat][i][label_name]], label2cat, cat2label = \
-                categories2labels(categories=[wiki_pages_by_type[var_cat][i]['categories']],
-                                  convert_categories=subcat2cat,
-                                  del_none=if_del_none,
-                                  excluded_categories=excluded_categories,
-                                  label2cat=label2cat)
+    wiki_pages_by_type, label2cat, cat2label = get_labels_and_cats(wiki_pages_by_type=wiki_pages_by_type,
+                                               if_labels_separately=if_labels_separately,
+                                               subcat2cat=subcat2cat,
+                                               if_del_none=if_del_none,
+                                               excluded_categories=excluded_categories)
 
     return wiki_pages_by_type, label2cat, cat2label
+
+
+def unimportant_expulsion(collect_data, if_labels_separately, min_doc_num, label2cat):
+    label_name = 'label' if if_labels_separately else 'categories'
+    label_counter = {}
+    for cat_type, data_info in collect_data.items():
+        val = 2 if cat_type == 'common' else 1
+        for doc_info in data_info:
+            for label in doc_info[label_name]:
+                label_counter[label] = label_counter.get(label, 0) + val
+    cool_labels = set()
+    for k, v in label_counter.items():
+        if v >= min_doc_num:
+            cool_labels.add(k)
+    updated_collect_data = {}
+    for cat_type, data_info in collect_data.items():
+        updated_collect_data[cat_type] = []
+        for doc_info in data_info:
+            if len(set(doc_info[label_name]) & cool_labels) > 0:
+                updated_doc_info = {k: v for k,v in doc_info.items()}
+                updated_doc_info[label_name] = set(doc_info[label_name]) & cool_labels
+                if if_labels_separately:
+                    updated_doc_info['categories'] = [label2cat[ll] for ll in updated_doc_info[label_name]]
+                updated_collect_data[cat_type].append(updated_doc_info)
+    return updated_collect_data
+
 
 def structuring_collected_date(collected_date, list_of_languages, if_rename_id=True):
     corpora = {}
@@ -1259,7 +1289,7 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
                                 max_level_for_search_categories=3, max_num_initial_categories=3000,
                                 mapping_of_subcategories_in_main_category=None,
                                 del_none=False, excluded_categories=False,
-                                min_num_of_cat_on_page=1,  max_num_of_cat_on_page=10,
+                                min_num_of_cat_on_page=1,  max_num_of_cat_on_page=10, min_doc_num_per_cat=2,
                                 variation_cluster_size=None, weights_cluster_size=None,
                                 max_level_for_search_pages=2, num_cpu=1, if_without_intersections_within_datatype=False,
                                 if_labels_separately=False, iteration=None, if_reversed=True, if_display_find_alg=True,
@@ -1398,6 +1428,18 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
         if_reversed=if_reversed,
         if_display_find_alg=if_display_find_alg,
         save_path=backup_path)
+
+    collect_data = unimportant_expulsion(collect_data=collect_data,
+                                         if_labels_separately=if_labels_separately,
+                                         min_doc_num=min_doc_num_per_cat,
+                                         label2cat=label2cat)
+
+    collect_data, label2cat, cat2label = get_labels_and_cats(wiki_pages_by_type=collect_data,
+                                                                   if_labels_separately=if_labels_separately,
+                                                                   subcat2cat=subcat2cat,
+                                                                   if_del_none=del_none,
+                                                                   excluded_categories=excluded_categories)
+
 
     print(f'Number of documents in monolingual {language_1} clusters = {len(collect_data[f"only_{language_1}"])}, '
           f'Number of documents in monolingual {language_2} clusters = {len(collect_data[f"only_{language_2}"])}, '
