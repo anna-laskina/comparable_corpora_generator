@@ -1,3 +1,4 @@
+import glob
 import os
 
 import numpy as np
@@ -27,10 +28,14 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
      to build a heatmap (def. 100).
     :return: None
     """
-    #corpus_path = os.path.join(corpus_path, f'dataset_{corpus_id}')
+    # corpus_path = os.path.join(corpus_path, f'dataset_{corpus_id}')
     save_path = os.path.join(save_path, f'dataset_{corpus_id}')
     path_check(path=os.path.join(save_path), if_create=True)
-    corpus = WikiCorpus(corpus_id=corpus_id, load_label_info=True, set_cluster_info=True, info_path=corpus_path)
+    langs = [path_name[-len(f'_{corpus_id}.json') - 5:-len(f'_{corpus_id}.json')].split('-') for path_name in
+             glob.glob(os.path.join(corpus_path,
+                                    f'dataset_{corpus_id}/wikipedia_categories_main_??-??_{corpus_id}.json'))]
+    corpus = WikiCorpus(corpus_id=corpus_id, language_1=langs[0][0], language_2=langs[0][1],
+                        load_label_info=True, set_cluster_info=True, info_path=corpus_path)
 
     if show_stat:
         print('DOC', f'Total = {len(corpus.dataset)}, '
@@ -84,12 +89,13 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
             sub_map = map[index][:, index]
 
             sns.heatmap(sub_map,
-                        #xticklabels=index, yticklabels=index,
+                        # xticklabels=index, yticklabels=index,
                         cmap="YlGnBu", ax=axs[i])
             axs[i].set_title([f'monolingual {corpus.language_1}', 'bilingual', f'monolingual {corpus.language_2}'][i])
-            #axs[i].set(xlabel="Label id", ylabel="Label id")
+            # axs[i].set(xlabel="Label id", ylabel="Label id")
         plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_id}_heatmap{size_show}-{max_size_label}.png'))
         plt.show()
+
 
 if __name__ == "__main__":
     print('ok')
