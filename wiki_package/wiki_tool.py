@@ -12,6 +12,7 @@ from wiki_package.wiki_corpora import WikiCorpus
 
 
 def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_path=constants.SAVE_PATH,
+                               target_type='secondary',
                                show_stat=True, plot_bar=True, min_size_label=0, plot_heatmap=True, size_show=50,
                                max_size_label=100):
     """Function for visualize wikipedia corpus.
@@ -35,8 +36,12 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
              glob.glob(os.path.join(corpus_path,
                                     f'dataset_{corpus_id}/wikipedia_categories_main_??-??_{corpus_id}.json'))]
     corpus = WikiCorpus(corpus_id=corpus_id, language_1=langs[0][0], language_2=langs[0][1],
-                        load_label_info=True, set_cluster_info=True, info_path=corpus_path)
-
+                        load_label_info=True, set_cluster_info=True, info_path=corpus_path,
+                        load_primary_labels=True if target_type == 'primary' else False)
+    if target_type == 'primary':
+        corpus.target = corpus.primary_target
+        corpus.set_cluster_types()
+        corpus_id += '_prime'
     if show_stat:
         print('DOC', f'Total = {len(corpus.dataset)}, '
                      f'In {corpus.language_1} = {corpus.lang_mask.count(0)}, '
