@@ -1242,12 +1242,16 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
     return wiki_pages_by_type, label2cat, cat2label
 
 
-def unimportant_expulsion(collect_data, if_labels_separately, min_doc_num, label2cat):
+def unimportant_expulsion(collect_data, if_labels_separately, min_doc_num, label2cat, min_len=3):
     label_name = 'label' if if_labels_separately else 'categories'
     label_counter = {}
+    empty_page_ids = []
     for cat_type, data_info in collect_data.items():
         val = 2 if cat_type == 'common' else 1
         for doc_info in data_info:
+            if any(len(text) < min_len for text in doc_info['text'].values()):
+                empty_page_ids.append(doc_info['pageid'])
+                continue
             for label in doc_info[label_name]:
                 label_counter[label] = label_counter.get(label, 0) + val
     cool_labels = set()
@@ -1258,6 +1262,8 @@ def unimportant_expulsion(collect_data, if_labels_separately, min_doc_num, label
     for cat_type, data_info in collect_data.items():
         updated_collect_data[cat_type] = []
         for doc_info in data_info:
+            if doc_info['pageid'] in empty_page_ids:
+                continue
             if len(set(doc_info[label_name]) & cool_labels) > 0:
                 updated_doc_info = {k: v for k,v in doc_info.items()}
                 updated_doc_info[label_name] = set(doc_info[label_name]) & cool_labels
