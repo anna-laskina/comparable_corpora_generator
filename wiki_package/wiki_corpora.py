@@ -117,6 +117,8 @@ class WikiCorpus:
         self.label2cat = util.read_data(
             os.path.join(path, f'dataset_{self.corpus_id}/'
                                f'wikipedia_categories_all_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
+        if type(self.label2cat) is dict:
+            self.label2cat = {int(k): v for k,v in self.label2cat.items()}
 
     def label2cat(self, label):
         if self.label2cat is None:

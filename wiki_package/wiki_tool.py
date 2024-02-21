@@ -62,10 +62,12 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
                         f'Only in {corpus.language_2} = {len(corpus.mono2_clusters)}.')
 
     if plot_bar:
+        label2index = {label: i for i, label in enumerate(list(set([l for ls in corpus.target for l in ls])))}
+        index2label = {i: label for label, i in label2index.items()}
         label_count = {label: [0, 0] for label in range(corpus.n_clusters)}
         for i in range(corpus.n_docs):
             for label in corpus.target[i]:
-                label_count[label][corpus.lang_mask[i]] += 1
+                label_count[label2index[label]][corpus.lang_mask[i]] += 1
 
         label_count = {k: v for k, v in label_count.items() if sum(v) >= min_size_label}
         label_count = {k: v for k, v in
@@ -73,7 +75,7 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
         dataframe = pd.DataFrame({
             corpus.language_1: [v[0] for v in label_count.values()],
             corpus.language_2: [v[1] for v in label_count.values()]},
-            index=[corpus.label2cat[i] for i in label_count.keys()]
+            index=[corpus.label2cat[index2label[i]] for i in label_count.keys()]
         )
         axis = dataframe.plot.bar(figsize=(20, 10))
         plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_id}_bar{min_size_label}.png'))
