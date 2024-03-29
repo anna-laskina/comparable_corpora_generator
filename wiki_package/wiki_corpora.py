@@ -5,17 +5,17 @@ from wiki_package import constants
 
 class WikiCorpus:
 
-    def __init__(self, corpus_id=None,  corpus_version=None, corpus_sequence_number=None,
-                 language_1='en', language_2='fr', info_path=constants.SAVE_PATH,
-                 load_label_info=True, set_cluster_info=True, load_primary_labels=True):
+    def __init__(self, corpus_id=None,  corpus_version=None, corpus_sequence_number=None, info_path=constants.SAVE_PATH,
+                 target_type=None, d_min=2):
 
         self.version = corpus_version if corpus_id is None else corpus_id[1: corpus_id.find('_')]
         self.sequence_number = corpus_sequence_number if corpus_id is None else corpus_id[corpus_id.find('_') + 1:]
         self.corpus_id = f'v{self.version}_{self.sequence_number}' if corpus_id is None else corpus_id
-        self.language_1 = language_1
-        self.language_2 = language_2
+        self.language_1 = None
+        self.language_2 = None
 
         self.dataset = None
+        self.labels = None
         self.target = None
         self.lang_mask = None
         self.type_mask = None
@@ -25,54 +25,66 @@ class WikiCorpus:
         self.bi_clusters = None
         self.mono1_clusters = None
         self.mono2_clusters = None
-
-        self.cat2label = None
-        self.label2cat = None
-        self.primary_target = None
+        self.primary_clusters = None
+        self.secondary_clusters = None
+        self.label2topic = None
 
         self.read_wikipedia_corpus(path=info_path)
-        if load_primary_labels:
-            self.def_primary_labels(path=info_path)
-        if load_label_info:
-            self.load_label2cat(path=info_path)
-        if set_cluster_info:
-            self.set_cluster_types()
+        self.set_cluster_info(path=info_path, d_min=d_min)
+        self.set_target(target_type=target_type)
+        self.set_type_mask()
 
     def read_wikipedia_corpus(self, path):
         self.dataset = []
-        self.target = []
+        self.labels = []
         self.lang_mask = []
 
-        for land_id, language in enumerate([self.language_1, self.language_2]):
-            wiki_info = util.read_data(
-                os.path.join(path, f'dataset_{self.corpus_id}/wikipedia_{language}_{self.corpus_id}.json'))
-            n_doc = len(wiki_info['id'])
-            self.dataset.extend([{'id': doc_id, 'text': wiki_info['text'][i]}
-                                 for i, doc_id in enumerate(wiki_info['id'])])
-            self.target.extend(wiki_info['label'])
-            self.lang_mask.extend([land_id] * n_doc)
-        self.n_clusters = len(set([doc_label for doc_labels in self.target for doc_label in doc_labels]))
+        wiki_info = util.read_data(
+            os.path.join(path, f'dataset_{self.corpus_id}/wikicorpus_{self.corpus_id}.json'))
+
+        list_of_languages = sorted(set(doc_info['language'] for doc_info in wiki_info))
+        if len(list_of_languages) > 2:
+            print('The corpus with more than 2 languages is not supported.')
+            exit()
+
+        self.language_1, self.language_2 = list_of_languages
+
+        for doc_info in wiki_info:
+            self.dataset.append({'id': doc_info['id'], 'text': doc_info['text']})
+            self.labels.append(doc_info['label'])
+            self.lang_mask.append(0 if doc_info['language'] == self.language_1 else 1)
         self.n_docs = len(self.dataset)
 
-    def def_primary_labels(self, path):
-        try:
-            topic_by_type = util.read_data(
-                os.path.join(
-                    path, f'dataset_{self.corpus_id}/'
-                          f'wikipedia_categories_main_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
-            primary_cats = [cat for type_dict in topic_by_type.values() for cat in type_dict['category']]
-        except FileNotFoundError:
-            print('No primary topics information found!')
-            return None
+    def set_cluster_info(self, path, d_min=2):
+        topics_info = util.read_data(
+            os.path.join(path, f'dataset_{self.corpus_id}/topic_information_{self.corpus_id}.json'))
+        self.bi_clusters, self.mono1_clusters, self.mono2_clusters = [], [], []
+        self.primary_clusters, self.secondary_clusters = set(), set()
+        for topic_info in topics_info.values():
+            topic_label = int(topic_info[2])
+            if topic_info[0] == 'secondary' and int(topic_info[3]) < d_min:
+                continue
+            if topic_info[0] == 'primary':
+                self.primary_clusters.add(topic_label)
+            else:
+                self.secondary_clusters.add(topic_label)
+            if topic_info[1] == 'bilingual':
+                self.bi_clusters.append(topic_label)
+            elif topic_info[1] == f'monolingual {self.language_1}':
+                self.mono1_clusters.append(topic_label)
+            else:
+                self.mono2_clusters.append(topic_label)
 
-        cat2label = util.read_data(
-            os.path.join(path,
-                         f'dataset_{self.corpus_id}/'
-                         f'wikipedia_labels_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
+        self.label2topic = util.read_data(
+            os.path.join(path, f'dataset_{self.corpus_id}/label_information_{self.corpus_id}.json'))
+        if type(self.label2topic) is dict:
+            self.label2topic = {int(k): v for k, v in self.label2topic.items()}
 
-        primary_labels = [cat2label[cat] for cat in primary_cats if cat in cat2label.keys()]
-        self.primary_target = [[label for label in labels if label in primary_labels] for labels in self.target]
-        return self.primary_target
+    def set_target(self, target_type='secondary'):
+        topic_set = self.primary_clusters\
+            if target_type == 'primary' else self.primary_clusters | self.secondary_clusters
+        self.target = [list(set(labels) & topic_set) for labels in self.labels]
+        self.n_clusters = len(set([doc_label for doc_labels in self.target for doc_label in doc_labels]))
 
     def set_type_mask(self):
         self.type_mask = []
@@ -91,18 +103,6 @@ class WikiCorpus:
         if None in self.type_mask:
             print('Clusters are not distributed by type correctly.')
 
-    def set_cluster_types(self):
-        lang_labels = [set(), set()]
-
-        for i in range(self.n_docs):
-            for label in self.target[i]:
-                lang_labels[self.lang_mask[i]].add(label)
-
-        self.bi_clusters = set(lang_labels[0] & lang_labels[1])
-        self.mono1_clusters = set(lang_labels[0] - lang_labels[1])
-        self.mono2_clusters = set(lang_labels[1] - lang_labels[0])
-        self.set_type_mask()
-
     def get_cluster_type(self, label):
         if label in self.bi_clusters:
             return 1
@@ -113,15 +113,8 @@ class WikiCorpus:
         else:
             return -1
 
-    def load_label2cat(self, path):
-        self.label2cat = util.read_data(
-            os.path.join(path, f'dataset_{self.corpus_id}/'
-                               f'wikipedia_categories_all_{self.language_1}-{self.language_2}_{self.corpus_id}.json'))
-        if type(self.label2cat) is dict:
-            self.label2cat = {int(k): v for k,v in self.label2cat.items()}
-
-    def label2cat(self, label):
-        if self.label2cat is None:
+    def get_topic_by_label(self, label):
+        if self.label2topic is None:
             print('No category information has been uploaded.')
             return None
-        return self.label2cat[label]
+        return self.label2topic[label]

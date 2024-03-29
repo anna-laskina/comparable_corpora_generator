@@ -170,7 +170,7 @@ def generate_categories_for_selection(initial_categories, max_level=3, max_num=1
                                              )
     if save_path is not None:
         util.save_data(cur_categories,
-                  os.path.join(save_path, f'categories_list_level_{cur_level}_{len(cur_categories)}.txt'))
+                       os.path.join(save_path, f'categories_list_level_{cur_level}_{len(cur_categories)}.txt'))
 
     return cur_categories
 
@@ -325,20 +325,20 @@ def mapping_subcategories_to_categories(initial_categories, type_initial_cat, sa
                         subcat2cat[subcat] = constants.BAD_NAME_CAT
         if if_backup:
             util.save_data({subcat_b: [subcat2cat[subcat_b], level_b] for subcat_b, level_b in cat_power.items()
-                       if level_b == level},
-                      os.path.join(save_path, f'back_up_map_subcat_to_cat_{save_name}_level_{level}.txt'))
+                            if level_b == level},
+                           os.path.join(save_path, f'back_up_map_subcat_to_cat_{save_name}_level_{level}.txt'))
         level += 1
 
     if save_path is not None:
         util.save_data(subcat2cat,
-                  os.path.join(save_path, f'map_subcat_to_cat_{save_name}.txt'))
+                       os.path.join(save_path, f'map_subcat_to_cat_{save_name}.txt'))
         util.save_data(cat_power,
-                  os.path.join(save_path, f'cat_power_{save_name}.txt'))
+                       os.path.join(save_path, f'cat_power_{save_name}.txt'))
 
     return subcat2cat, cat_power
 
 
-def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, max_level=30, add_name = '',
+def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, max_level=30, add_name='',
                           if_backup=True):
     """Function for creating Wikipedia tree.
 
@@ -418,7 +418,7 @@ def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, m
 
         if if_backup:
             util.save_data(cur_wikipedia_tree,
-                      os.path.join(backup_path, f'back_up_wikipedia_tree_{add_name}_level_{cur_level}.json'))
+                           os.path.join(backup_path, f'back_up_wikipedia_tree_{add_name}_level_{cur_level}.json'))
 
     if save_path is not None:
         util.save_data(wikipedia_tree, os.path.join(save_path, f'wikipedia_tree_{add_name}_levels_0-{cur_level}.json'))
@@ -428,7 +428,7 @@ def create_wikipedia_tree(root_categories=None, save_path=None, start_level=0, m
         for f in files:
             if f'back_up_wikipedia_tree_{add_name}_level_' in f:
                 os.remove(os.path.join(root, f))
-    #os.rmdir(backup_path)
+    # os.rmdir(backup_path)
 
     return wikipedia_tree
 
@@ -479,7 +479,7 @@ def map_subcategories_to_categories_from_wiki_tree(wikipedia_tree=None, initial_
         max_real_level = max(max_level, max([cat_info[0] for cat_info in wikipedia_tree.values()]))
         util.save_data(sub2cat, os.path.join(save_path, f'map_subcat_to_cat_{max_real_level}->{initial_level}.txt'))
         util.save_data(primary_categories,
-                  os.path.join(save_path, f'categories_list_level_{initial_level}_{len(primary_categories)}.txt'))
+                       os.path.join(save_path, f'categories_list_level_{initial_level}_{len(primary_categories)}.txt'))
 
     return sub2cat, primary_categories
 
@@ -857,7 +857,7 @@ def get_data_from_pages(list_of_page_ids, list_of_language, convert_categories=N
             for doc_id in list_of_page_ids]
 
 
-def check_pageid(pageid, list_of_languages, forbidden_cat, map_subcat2cat=None, min_num_cat=1,  max_num_cat=100,
+def check_pageid(pageid, list_of_languages, forbidden_cat, map_subcat2cat=None, min_num_cat=1, max_num_cat=100,
                  if_del_none=True, excluded_categories=True):
     """Function to check the page for the following conditions:
     1. whether the page exists in all languages from [list_of_languages]
@@ -883,8 +883,8 @@ def check_pageid(pageid, list_of_languages, forbidden_cat, map_subcat2cat=None, 
     except:
         return False
     return all(ll in main_page_data['language'] for ll in list_of_languages) and \
-        all(ll not in main_page_data['categories'] for ll in forbidden_cat) and \
-        min_num_cat <= len(main_page_data['categories']) <= max_num_cat
+           all(ll not in main_page_data['categories'] for ll in forbidden_cat) and \
+           min_num_cat <= len(main_page_data['categories']) <= max_num_cat
 
 
 def choose_relevant_pages_from_candidates(candidate_pages, required_num,
@@ -999,45 +999,9 @@ def find_pages_under_category(main_category, category_size,
     return final_pages
 
 
-def categories2labels(categories, convert_categories=None, del_none=True, excluded_categories=True,
-                      label2cat=None):
-    if convert_categories is not None:
-        categories = [convert_subcat_into_categories(list_of_subcat=list_of_cat,
-                                                     subcat2cat=convert_categories,
-                                                     if_del_none=del_none,
-                                                     excluded_categories=excluded_categories)
-                      for list_of_cat in categories]
-    if label2cat is None:
-        label2cat = list(set(cat for list_of_cat in categories for cat in list_of_cat))
-    else:
-        label2cat.extend(list(set(cat for list_of_cat in categories
-                                  for cat in list_of_cat
-                                  if cat not in label2cat)))
-
-    cat2label = {cat: i for i, cat in enumerate(label2cat)}
-
-    labels = [[cat2label[cat] for cat in list_of_cat if cat in label2cat] for list_of_cat in categories]
-    return labels, label2cat, cat2label
-
-
-def get_labels_and_cats(wiki_pages_by_type, if_labels_separately, subcat2cat, if_del_none, excluded_categories):
-    label2cat = None
-    cat2label = None
-    label_name = 'label' if if_labels_separately else 'categories'
-    for var_cat, list_of_data in wiki_pages_by_type.items():
-        for i, doc in enumerate(list_of_data):
-            [wiki_pages_by_type[var_cat][i][label_name]], label2cat, cat2label = \
-                categories2labels(categories=[wiki_pages_by_type[var_cat][i]['categories']],
-                                  convert_categories=subcat2cat,
-                                  del_none=if_del_none,
-                                  excluded_categories=excluded_categories,
-                                  label2cat=label2cat)
-    return wiki_pages_by_type, label2cat, cat2label
-
-
 def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, max_level_search_pageid=20,
                      min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
-                     if_labels_separately=False, if_del_none=True, excluded_categories=True,
+                     if_del_none=True, excluded_categories=True,
                      iteration=None, if_reversed=False, if_without_intersections_within_datatype=False,
                      if_display_find_alg=True, save_path=None):
     """Function to collect data for wikipedia corpus.
@@ -1083,7 +1047,7 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
     for var_cat, d_cat in iteration:
         type_cat = 'Monolingual' if len(d_cat['language']) == 1 else 'Bilingual'
         type_cat += f' {var_cat[5:]} clusters' if len(d_cat['language']) == 1 else ' clusters'
-        print(type_cat, end = ', ')
+        print(type_cat, end=', ')
         list_of_categories = d_cat['category']
         forbidden_cat = (set(all_categories) | additional_categories) - set(list_of_categories)
         forbidden_cat_within_datatype = set()
@@ -1115,7 +1079,8 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
                                       for page_id_list in page_id_list_by_cat])).flat)
             wiki_pages_by_type[var_cat].extend(data)
         else:
-            inter = zip(list_of_categories, list_of_size) if if_display_find_alg else tqdm(zip(list_of_categories, list_of_size))
+            inter = zip(list_of_categories, list_of_size) if if_display_find_alg else tqdm(
+                zip(list_of_categories, list_of_size))
             for cat, cat_size in inter:
                 if if_without_intersections_within_datatype:
                     forbidden_cat -= set(list_of_categories)
@@ -1145,21 +1110,14 @@ def collect_wikidata(categories_set, variation_cat_size, weights_cat_size=None, 
         if save_path is not None:
             util.save_data(wiki_pages_by_type[var_cat], os.path.join(save_path, f'wiki_{var_cat}_bk.json'))
 
-    wiki_pages_by_type, label2cat, cat2label = get_labels_and_cats(wiki_pages_by_type=wiki_pages_by_type,
-                                               if_labels_separately=if_labels_separately,
-                                               subcat2cat=subcat2cat,
-                                               if_del_none=if_del_none,
-                                               excluded_categories=excluded_categories)
-    return wiki_pages_by_type, label2cat, cat2label
-
-
+    return wiki_pages_by_type
 
 
 def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_size=None, max_level_search_pageid=20,
-                     min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
-                     if_labels_separately=False, if_del_none=True, excluded_categories=True,
-                     iteration=None, if_reversed=False, if_without_intersections_within_datatype=False,
-                     if_display_find_alg=True, save_path=None):
+                             min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, subcat2cat=None, num_cpu=1,
+                             if_del_none=True, excluded_categories=True,
+                             iteration=None, if_reversed=False, if_without_intersections_within_datatype=False,
+                             if_display_find_alg=True, save_path=None):
     if if_without_intersections_within_datatype and num_cpu > 1:
         print('Parameter "if_without_intersections_within_datatype" cannot be True '
               'if Parameter "num_cpu" is greater than 1. Parameter "num_cpu" will be equal 1.')
@@ -1170,7 +1128,8 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
     used_pages = []
 
     if iteration == 'random':
-        iteration_list = [[cat, d_cat['language'], var_cat] for var_cat, d_cat in categories_set.items() for cat in d_cat['category']]
+        iteration_list = [[cat, d_cat['language'], var_cat] for var_cat, d_cat in categories_set.items() for cat in
+                          d_cat['category']]
         list_of_size = random.choices(variation_cat_size, weights=weights_cat_size, k=len(all_categories))
         for i, n in enumerate(list_of_size):
             iteration_list[i].append(n)
@@ -1188,7 +1147,7 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
         type_cat = 'Monolingual' if len(cat_langs) == 1 else 'Bilingual'
         type_cat += f' {var_cat[5:]} cluster ' if len(cat_langs) == 1 else ' cluster '
         type_cat += cat
-        print(type_cat, end = ', ')
+        print(type_cat, end=', ')
 
         list_of_categories = categories_set[var_cat]['category']
         within_type = set(categories_set[var_cat]['category']) | additional_categories[var_cat]
@@ -1229,62 +1188,107 @@ def collect_wikidata_shuffle(categories_set, variation_cat_size, weights_cat_siz
         finish_time = time.perf_counter()
         print(f"{cat} finished in {util.sec2hms(finish_time - start_time)}")
         additional_categories[var_cat].update(set(category for doc_info in data
-                                         for category in doc_info['categories']) - set(list_of_categories))
+                                                  for category in doc_info['categories']) - set(list_of_categories))
         if save_path is not None:
             util.save_data(wiki_pages_by_type[var_cat], os.path.join(save_path, f'wiki_{cat}_bk.json'))
 
-    wiki_pages_by_type, label2cat, cat2label = get_labels_and_cats(wiki_pages_by_type=wiki_pages_by_type,
-                                               if_labels_separately=if_labels_separately,
-                                               subcat2cat=subcat2cat,
-                                               if_del_none=if_del_none,
-                                               excluded_categories=excluded_categories)
-
-    return wiki_pages_by_type, label2cat, cat2label
+    return wiki_pages_by_type
 
 
-def unimportant_expulsion(collect_data, if_labels_separately, min_doc_num, label2cat, min_len=3):
-    label_name = 'label' if if_labels_separately else 'categories'
+def postprocessing(collect_data, categories_set, min_doc_num=2, min_doc_len=100):
+    data_row = []
     label_counter = {}
-    empty_page_ids = []
+    cat_info = []
+    lang_mask = []
+    text_cause = 0
     for cat_type, data_info in collect_data.items():
-        val = 2 if cat_type == 'common' else 1
         for doc_info in data_info:
-            if any(len(text) < min_len for text in doc_info['text'].values()):
-                empty_page_ids.append(doc_info['pageid'])
-                continue
-            for label in doc_info[label_name]:
-                label_counter[label] = label_counter.get(label, 0) + val
-    cool_labels = set()
-    for k, v in label_counter.items():
-        if v >= min_doc_num:
-            cool_labels.add(k)
-    updated_collect_data = {}
-    for cat_type, data_info in collect_data.items():
-        updated_collect_data[cat_type] = []
-        for doc_info in data_info:
-            if doc_info['pageid'] in empty_page_ids:
-                continue
-            if len(set(doc_info[label_name]) & cool_labels) > 0:
-                updated_doc_info = {k: v for k,v in doc_info.items()}
-                updated_doc_info[label_name] = set(doc_info[label_name]) & cool_labels
-                if if_labels_separately:
-                    updated_doc_info['categories'] = [label2cat[ll] for ll in updated_doc_info[label_name]]
-                updated_collect_data[cat_type].append(updated_doc_info)
-    return updated_collect_data
+            for lang, text in doc_info['text'].items():
+                if len(text) < min_doc_len:
+                    text_cause += 1
+                    continue
+                doc = {
+                    'id': doc_info['pageid'],
+                    'language': lang,
+                    'text': text,
+                }
+                data_row.append(doc)
+                cat_info.append(doc_info['categories'])
+                lang_mask.append(lang)
+                for cat in doc_info['categories']:
+                    label_counter[cat] = label_counter.get(cat, 0) + 1
+    # Def Primary topics
+    primary_cats = [cat for cats in categories_set.values() for cat in cats['category'] if
+                    label_counter.get(cat, 0) >= min_doc_num]
+    keep_mask = [False] * len(data_row)
+    primary_counter = {}
+    primary_cat_lang = {lang: set() for lang in set(lang_mask)}
+    for doc_index, doc_cats in enumerate(cat_info):
+        keep = False
+        for doc_cat in doc_cats:
+            if doc_cat in primary_cats:
+                keep = True
+                primary_counter[doc_cat] = primary_counter.get(doc_cat, 0) + 1
+                primary_cat_lang[lang_mask[doc_index]].add(doc_cat)
+        keep_mask[doc_index] = keep
+    # Def secondary topics
+    secondary_cat_info = [[cat for cat in cat_info[doc_index] if cat not in primary_cats] if keep else [] for
+                          doc_index, keep in enumerate(keep_mask)]
+    secondary_counter = {}
+    secondary_cat_lang = {lang: set() for lang in set(lang_mask)}
+    for doc_index, doc_cats in enumerate(secondary_cat_info):
+        for cat in doc_cats:
+            secondary_counter[cat] = secondary_counter.get(cat, 0) + 1
+            secondary_cat_lang[lang_mask[doc_index]].add(cat)
+    cat_remove_list_cant = [cat for cat, num in secondary_counter.items() if num < min_doc_num]
 
+    while len(cat_remove_list_cant) > 0:
+        secondary_counter = {}
+        for doc_index, doc_cats in enumerate(secondary_cat_info):
+            for cat in doc_cats:
+                if cat not in cat_remove_list_cant:
+                    secondary_counter[cat] = secondary_counter.get(cat, 0) + 1
+        cat_remove_list_cant = [cat for cat, num in secondary_counter.items() if num < min_doc_num]
+    # Def topic information
+    label_info = {}
+    topic_info = {}
+    free_label = 0
+    langs = set(lang_mask)
+    for cat, num in primary_counter.items():
+        cat_type = None
+        for lang in langs:
+            if cat in primary_cat_lang[lang] and cat_type is None:
+                cat_type = f'monolingual {lang}'
+            elif cat in primary_cat_lang[lang] and cat_type is not None:
+                cat_type = 'bilingual'
+        topic_info[cat] = ("primary", cat_type, free_label, num)
+        label_info[free_label] = cat
+        free_label += 1
 
-def structuring_collected_date(collected_date, list_of_languages, if_rename_id=True):
-    corpora = {}
-    for language in list_of_languages:
-        corpora[language] = {corpus_key: [doc[corpus_key] if corpus_key != 'text' else doc[corpus_key][language]
-                                          for data_key in [f'only_{language}', 'common']
-                                          for doc in collected_date[data_key]]
-                             for corpus_key in list(collected_date['common'][0].keys())}
-        corpora[language]['language'] = language
-        if if_rename_id:
-            old_id_name = [name for name in list(collected_date['common'][0].keys()) if 'id' in name.lower()][0]
-            corpora[language]['id'] = corpora[language].pop(old_id_name)
-    return corpora
+    for cat, num in secondary_counter.items():
+        cat_type = None
+        for lang in langs:
+            if cat in secondary_cat_lang[lang] and cat_type is None:
+                cat_type = f'monolingual {lang}'
+            elif cat in secondary_cat_lang[lang] and cat_type is not None:
+                cat_type = 'bilingual'
+        topic_info[cat] = ("secondary", cat_type, free_label, num)
+        label_info[free_label] = cat
+        free_label += 1
+    # Def data with labels
+    corpus = []
+    for doc_index, data_info in enumerate(data_row):
+        if keep_mask[doc_index]:
+            labels = [topic_info[cat][2] for cat in cat_info[doc_index] if cat in topic_info.keys()]
+            doc = {
+                'id': data_info['id'],
+                'language': data_info['language'],
+                'text': data_info['text'],
+                'label': labels
+            }
+            corpus.append(doc)
+
+    return corpus, topic_info, label_info
 
 
 def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2gen',
@@ -1295,10 +1299,10 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
                                 max_level_for_search_categories=3, max_num_initial_categories=3000,
                                 mapping_of_subcategories_in_main_category=None,
                                 del_none=False, excluded_categories=False,
-                                min_num_of_cat_on_page=1,  max_num_of_cat_on_page=10, min_doc_num_per_cat=2,
-                                variation_cluster_size=None, weights_cluster_size=None,
+                                min_num_of_cat_on_page=1, max_num_of_cat_on_page=10, min_doc_num_per_cat=2,
+                                variation_cluster_size=None, weights_cluster_size=None, min_doc_len=100,
                                 max_level_for_search_pages=2, num_cpu=1, if_without_intersections_within_datatype=False,
-                                if_labels_separately=False, iteration=None, if_reversed=True, if_display_find_alg=True,
+                                iteration=None, if_reversed=True, if_display_find_alg=True,
                                 collect_type='shuffle',
                                 save_path=None, add_name=''):
     """Function to collect data for wikipedia corpus.
@@ -1366,8 +1370,8 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
 
     name2print = {f'only_{language_1}': f'Monolingual {language_1}',
                   f'only_{language_2}': f'Monolingual {language_2}',
-                  'common' : 'Bilingual'
-                 }
+                  'common': 'Bilingual'
+                  }
 
     print('Category selection process...')
     categories_set = generate_categories(initial_categories=start_categories_info,
@@ -1381,13 +1385,8 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
                                          max_num=max_num_initial_categories)
     print('Selected categories:')
     for k, v in categories_set.items():
-
         print(f'{name2print[k]}  categories')
         print(', '.join(f'({i}) {name}' for i, name in enumerate(v['category'])))
-
-    if data_save_path is not None:
-        util.save_data(categories_set,
-                  os.path.join(data_save_path, f'wikipedia_categories_main_{language_1}-{language_2}_{add_name}.json'))
 
     if os.path.exists(mapping_of_subcategories_in_main_category):
         subcat2cat = util.read_data(mapping_of_subcategories_in_main_category)
@@ -1417,7 +1416,7 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
 
     print('Collect data', iteration)
     collect_function = collect_wikidata_shuffle if collect_type == 'shuffle' else collect_wikidata
-    collect_data, label2cat, cat2label = collect_function(
+    collect_data = collect_function(
         categories_set=categories_set,
         variation_cat_size=variation_cluster_size,
         weights_cat_size=weights_cluster_size,
@@ -1426,7 +1425,6 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
         max_num_of_cat_on_page=max_num_of_cat_on_page,
         subcat2cat=subcat2cat,
         num_cpu=num_cpu,
-        if_labels_separately=if_labels_separately,
         if_del_none=del_none,
         excluded_categories=excluded_categories,
         iteration=iteration,
@@ -1435,45 +1433,27 @@ def build_corpus_from_wikipedia(start_categories_info=None, type_cat_info='cat2g
         if_display_find_alg=if_display_find_alg,
         save_path=backup_path)
 
-    collect_data = unimportant_expulsion(collect_data=collect_data,
-                                         if_labels_separately=if_labels_separately,
-                                         min_doc_num=min_doc_num_per_cat,
-                                         label2cat=label2cat)
+    print('Data collection is complete')
 
-    collect_data, label2cat, cat2label = get_labels_and_cats(wiki_pages_by_type=collect_data,
-                                                                   if_labels_separately=if_labels_separately,
-                                                                   subcat2cat=subcat2cat,
-                                                                   if_del_none=del_none,
-                                                                   excluded_categories=excluded_categories)
+    corpus, topic_info, label_info = postprocessing(collect_data=collect_data, categories_set=categories_set,
+                                                    min_doc_num=min_doc_num_per_cat, min_doc_len=min_doc_len)
 
-
-    print(f'Number of documents in monolingual {language_1} clusters = {len(collect_data[f"only_{language_1}"])}, '
-          f'Number of documents in monolingual {language_2} clusters = {len(collect_data[f"only_{language_2}"])}, '
-          f'Number of documents in bilingual clusters = {len(collect_data["common"])}'
-          )
-    if data_save_path is not None:
-        util.save_data(label2cat, os.path.join(data_save_path,
-                                          f'wikipedia_categories_all_{language_1}-{language_2}_{add_name}.json'))
-        util.save_data(cat2label, os.path.join(data_save_path,
-                                          f'wikipedia_labels_{language_1}-{language_2}_{add_name}.json'))
-
-    print('Corpus reorganisation.')
-    corpus1, corpus2 = structuring_collected_date(collected_date=collect_data,
-                                                  list_of_languages=[language_1, language_2],
-                                                  if_rename_id=True).values()
+    print(f'Number of documents = {len(corpus)}, Number of topics = {len(label_info)}')
 
     if data_save_path is not None:
-        util.save_data(corpus1, os.path.join(data_save_path, f'wikipedia_{language_1}_{add_name}.json'))
-        util.save_data(corpus2, os.path.join(data_save_path, f'wikipedia_{language_2}_{add_name}.json'))
+        util.save_data(corpus, os.path.join(data_save_path, f'wikicorpus_{add_name}.json'))
+        util.save_data(topic_info, os.path.join(data_save_path, f'topic_information_{add_name}.json'))
+        util.save_data(label_info, os.path.join(data_save_path, f'label_information_{add_name}.json'))
 
-    if os.path.exists(os.path.join(data_save_path, f'wikipedia_{language_1}_{add_name}.json')) and os.path.exists(os.path.join(data_save_path, f'wikipedia_{language_2}_{add_name}.json')):
+    if os.path.exists(os.path.join(data_save_path, f'wikicorpus_{add_name}.json')):
         print('Corpus has been successfully created. Intermediate files will be deleted')
         for root, dirs, files in os.walk(backup_path):
             for f in files:
                 os.remove(os.path.join(root, f))
         os.rmdir(backup_path)
 
-    return corpus1, corpus2
+    return corpus, topic_info, label_info
+
 
 if __name__ == "__main__":
     print('ok')

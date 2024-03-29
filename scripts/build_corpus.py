@@ -111,7 +111,6 @@ if __name__ == "__main__":
         max_level_for_search_pages=constants.MAX_LEVEL_FOR_SEARCH_PAGES,
         num_cpu=args.num_cpu,
         if_without_intersections_within_datatype= args.without_inter_within,
-        if_labels_separately=True,
         iteration=iteration_list,
         if_reversed=False,
         if_display_find_alg=args.verbose,
