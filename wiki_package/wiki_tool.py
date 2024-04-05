@@ -1,4 +1,3 @@
-import glob
 import os
 
 import numpy as np
@@ -12,9 +11,9 @@ from wiki_package.wiki_corpora import WikiCorpus
 
 
 def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_path=constants.SAVE_PATH,
-                               target_type='secondary',
-                               show_stat=True, plot_bar=True, min_size_label=0, plot_heatmap=True, size_show=50,
-                               max_size_label=100, fill2size=True, TD_count=True, min_dt=100, plot_td=True):
+                               target_type='secondary_2',
+                               show_stat=True, plot_bar=True, min_size_label=None, plot_heatmap=True, size_show=50,
+                               max_size_label=100, fill2size=True, TD_count=True, plot_td=True):
     """Function for visualize wikipedia corpus.
 
     :param corpus_id: str, A name to identify several versions of the corpus. Ex. v0_0.
@@ -32,36 +31,29 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
     # corpus_path = os.path.join(corpus_path, f'dataset_{corpus_id}')
     save_path = os.path.join(save_path, f'dataset_{corpus_id}')
     path_check(path=os.path.join(save_path), if_create=True)
-    langs = [path_name[-len(f'_{corpus_id}.json') - 5:-len(f'_{corpus_id}.json')].split('-') for path_name in
-             glob.glob(os.path.join(corpus_path,
-                                    f'dataset_{corpus_id}/wikipedia_categories_main_??-??_{corpus_id}.json'))]
-    if len(langs) == 0:
-        langs = [path_name[-len(f'_{corpus_id}.json') - 5:-len(f'_{corpus_id}.json')].split('-') for path_name in
-                 glob.glob(os.path.join(corpus_path,
-                                        f'dataset_{corpus_id}/wikipedia_categories_all_??-??_{corpus_id}.json'))]
-    corpus = WikiCorpus(corpus_id=corpus_id, language_1=langs[0][0], language_2=langs[0][1],
-                        load_label_info=True, set_cluster_info=True, info_path=corpus_path,
-                        load_primary_labels=True if target_type == 'primary' else False)
-    if target_type == 'primary':
-        corpus.target = corpus.primary_target
-        corpus.set_cluster_types()
-        corpus_id += '_prime'
+
+    corpus = WikiCorpus(corpus_id=corpus_id, info_path=corpus_path,
+                        target_type=target_type.split('_')[0], d_min=int(target_type.split('_')[1]))
+    corpus_print_name = f'{corpus_id}_{target_type[0]}{target_type.split("_")[1]}'
+
     if show_stat:
-        print('DOC', f'Total = {len(corpus.dataset)}, '
+        print('DOC:', f'Total = {corpus.n_docs}, '
                      f'In {corpus.language_1} = {corpus.lang_mask.count(0)}, '
                      f'In {corpus.language_2} = {corpus.lang_mask.count(1)}, '
                      f'Common = {corpus.type_mask.count(1)}, '
                      f'Only in {corpus.language_1} = {corpus.type_mask.count(0)}, '
                      f'Only in {corpus.language_2} = {corpus.type_mask.count(2)}.')
 
-        print('LABELS', f'Total = {len(corpus.mono1_clusters) + len(corpus.mono2_clusters) + len(corpus.bi_clusters)}, '
-                        f'In {corpus.language_1} = {len(corpus.mono1_clusters) + len(corpus.bi_clusters)}, '
-                        f'In {corpus.language_2} = {len(corpus.mono2_clusters) + len(corpus.bi_clusters)}, '
-                        f'Common = {len(corpus.bi_clusters)}, '
-                        f'Only in {corpus.language_1} = {len(corpus.mono1_clusters)}, '
-                        f'Only in {corpus.language_2} = {len(corpus.mono2_clusters)}.')
+        print('TOPICS:', f'Total = {corpus.n_clusters}, '
+                        f'Monolingual {corpus.language_1} = {len(corpus.mono1_clusters)}, '
+                        f'Monolingual {corpus.language_2} = {len(corpus.mono2_clusters)}, '
+                        f'Bilingual = {len(corpus.bi_clusters)}, '
+                        f'Primary = {len(corpus.primary_clusters)}, '
+                        f'Secondary = {len(corpus.secondary_clusters)}.')
 
     if plot_bar:
+        if min_size_label is None:
+            min_size_label = int(target_type.split('_')[1])
         label2index = {label: i for i, label in enumerate(list(set([l for ls in corpus.target for l in ls])))}
         index2label = {i: label for label, i in label2index.items()}
         label_count = {label: [0, 0] for label in range(corpus.n_clusters)}
@@ -75,10 +67,10 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
         dataframe = pd.DataFrame({
             corpus.language_1: [v[0] for v in label_count.values()],
             corpus.language_2: [v[1] for v in label_count.values()]},
-            index=[corpus.label2cat[index2label[i]] for i in label_count.keys()]
+            index=[corpus.label2topic[index2label[i]] for i in label_count.keys()]
         )
         axis = dataframe.plot.bar(figsize=(20, 10))
-        plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_id}_bar{min_size_label}.png'))
+        plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_print_name}_bar{min_size_label}.png'))
         plt.show()
 
     if plot_heatmap:
@@ -109,34 +101,29 @@ def visualize_wikipedia_corpus(corpus_id, corpus_path=constants.SAVE_PATH, save_
                         cmap="YlGnBu", ax=axs[i], vmax=max_size_label)
             axs[i].set_title([f'monolingual {corpus.language_1}', 'bilingual', f'monolingual {corpus.language_2}'][i])
             # axs[i].set(xlabel="Label id", ylabel="Label id")
-        plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_id}_heatmap{size_show}-{max_size_label}.png'))
+        plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_print_name}_heatmap{size_show}-{max_size_label}.png'))
         plt.show()
 
     if TD_count == True:
-        target_d1 = [label for labels in corpus.target for label in labels]
-        label_count = {label: target_d1.count(label) for label in set(target_d1)}
-        relevant_labels = [k for k, v in label_count.items() if v >= min_dt]
-        relevant_labels_set = set(relevant_labels)
-        topic_count_per_doc = {}
-        for labels in corpus.target:
-            relevant_topic_num = len(set(labels) & relevant_labels_set)
-            topic_count_per_doc[relevant_topic_num] = topic_count_per_doc.get(relevant_topic_num, 0) + 1
+        topic_per_doc = [len(labels) for labels in corpus.target]
+        topic_count_per_doc = {num: topic_per_doc.count(num) for num in set(topic_per_doc)}
         topic_count_per_doc = dict(sorted(topic_count_per_doc.items()))
-        n_relevant_doc = sum([v for k, v in topic_count_per_doc.items() if k != 0])
-        docs_per_relevant_cluster = [label_count[label] for label in relevant_labels]
-        print(f'If only labels with at least {min_dt} documents are considered.')
-        print(f'Docs: {n_relevant_doc:5d} Labels:{len(relevant_labels):3d} Labels per Doc: {sum([k * v for k, v in topic_count_per_doc.items() if k != 0])/n_relevant_doc:.2f} Docs per label {np.mean(docs_per_relevant_cluster):.2f}')
-        print('Number of topics and number of documents with this number of topics:', topic_count_per_doc)
+
+        doc_per_topic = {}
+        for labels in corpus.target:
+            for label in labels:
+                doc_per_topic[label] = doc_per_topic.get(label, 0) + 1
+
+        print(f'Topics per Doc: {np.mean(topic_per_doc):.2f} Docs per topic {np.mean(list(doc_per_topic.values())):.2f}')
+        print('Number of topics and number of documents with this number of topics:')
+        print(topic_count_per_doc)
         if plot_td:
-            if 0 in topic_count_per_doc.keys():
-                del topic_count_per_doc[0]
             x, y = zip(*topic_count_per_doc.items()) # unpack a list of pairs into two tuples
             plt.plot(x, y)
             plt.xlabel('Number of topics')
             plt.ylabel('Number of documents')
-            plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_id}_plot_topics_per_doc_{min_dt}.png'))
+            plt.savefig(os.path.join(save_path, f'wikipedia_{corpus_print_name}_plot_topics_per_doc.png'))
             plt.show()
-
 
 
 if __name__ == "__main__":
